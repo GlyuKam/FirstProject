@@ -13,6 +13,7 @@ export class Game {
   frameCount = 0;
   score = 0;
   isGameStarted = false;
+  record = 0;
 
   constructor(canvas) {
     this.canvas = canvas;
@@ -28,6 +29,7 @@ export class Game {
 
     this.scoreText = new Text(this.ctx, this.score, 50,15);
     this.buttonText = new Text(this.ctx, 'Restart', this.canvas.width - 120,20);
+    this.recordText = new Text(this.ctx, this.record, 50,60);
   }
 
   async loadAssets() {
@@ -41,6 +43,9 @@ export class Game {
 
   start() {
     this.initializeControls();
+    if (this.record < this.score){ 
+      this.record = this.getCookie("score")
+  }
     this.intervalId = setInterval(() => this.draw(), 10);
   
     this.canvas.addEventListener('click', (e) => {
@@ -105,14 +110,20 @@ export class Game {
 
       this.scoreText = new Text(this.ctx, this.score, 50,15);
       this.buttonText = new Text(this.ctx, 'Restart', this.canvas.width - 120,20);
+      this.recordText = new Text(this.ctx, this.record, 50,60);
 }
 
   restartGame(){
+
     clearInterval(this.intervalId);
     this.intervalId = setInterval(() => this.draw(), 10);
 		this.bird = new Bird(this.canvas);
 		this.pipes = [new Pipe(this.canvas)];
 		this.ground = new Ground(this.canvas);
+    this.setCookie('score', this.score, {secure: true, 'max-score': 3600});
+    if (this.record < this.score){ 
+      this.record = this.getCookie("score")
+  }
 		this.score = 0;
 		this.frameCount = 0;
 		this.k = 3.5;
@@ -145,5 +156,37 @@ export class Game {
     if (event.type === 'keydown' && event.code !== 'Space') return;
     if (!this.isGameStarted) this.isGameStarted = true;
     this.bird.flap();
-  }  
-}
+  } 
+  
+  getCookie(name) {
+    let matches = document.cookie.match(new RegExp(
+      "(?:^|; )" + name.replace(/([\.$?*|{}\(\)\[\]\\\/\+^])/g, '\\$1') + "=([^;]*)"
+    ));
+    return matches ? decodeURIComponent(matches[1]) : undefined;
+  }
+  
+    setCookie(name, value, options = {}) {
+      options = {
+        path: '/',
+        // при необходимости добавьте другие значения по умолчанию
+        ...options
+      };
+    
+      if (options.expires instanceof Date) {
+        options.expires = options.expires.toUTCString();
+      }
+    
+      let updatedCookie = encodeURIComponent(name) + "=" + encodeURIComponent(value);
+    
+      for (let optionKey in options) {
+        updatedCookie += "; " + optionKey;
+        let optionValue = options[optionKey];
+        if (optionValue !== true) {
+          updatedCookie += "=" + optionValue;
+        }
+      }
+    
+      document.cookie = updatedCookie;
+    }
+  
+  }
